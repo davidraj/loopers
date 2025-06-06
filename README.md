@@ -209,7 +209,7 @@ docker-compose up
 This project is licensed under the MIT License.
 ```
 
-## Step 17: Create a sample model and test
+##  17: Create a sample model and test
 
 Let's create a User model as an example:
 
@@ -221,7 +221,7 @@ docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails gener
 docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails db:migrate'
 ```
 
-## Step 18: Create a comprehensive User model test
+##  18: Create a comprehensive User model test
 
 ```bash
 docker-compose run --user root web bash -c 'cd /myapp && cat > spec/models/user_spec.rb << "EOF"
@@ -255,19 +255,19 @@ end
 EOF'
 ```
 
-## Step 19: Run the complete test suite
+##  19: Run the complete test suite
 
 ```bash
 docker-compose run --user root web bash -c 'cd /myapp && bundle exec rspec --format documentation'
 ```
 
-## Step 20: Create a basic controller
+##  20: Create a basic controller
 
 ```bash
 docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails generate controller Users index show'
 ```
 
-## Step 21: Start the application
+##  21: Start the application
 
 ```bash
 docker-compose up

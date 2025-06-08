@@ -1,8 +1,8 @@
 class CreateTvShowDistributors < ActiveRecord::Migration[7.0]
   def change
     create_table :tv_show_distributors do |t|
-      t.references :tv_show, null: false, foreign_key: true
-      t.references :distributor, null: false, foreign_key: true
+      t.references :tv_show, null: false, foreign_key: true, index: false
+      t.references :distributor, null: false, foreign_key: true, index: false
       t.string :distribution_type # e.g., 'streaming', 'broadcast', 'cable'
       t.string :region # e.g., 'US', 'UK', 'global'
       t.date :contract_start_date

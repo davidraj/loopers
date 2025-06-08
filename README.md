@@ -1,4 +1,4 @@
-# Looper - Rails Application
+# Looper
 
 A modern Rails application built with Docker, PostgreSQL, and comprehensive testing setup.
 
@@ -271,3 +271,45 @@ docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails gener
 
 ```bash
 docker-compose up
+```
+
+## Database Setup
+
+### Initial Setup
+```bash
+# Create and migrate the database
+docker-compose exec web bundle exec rails db:create
+docker-compose exec web bundle exec rails db:migrate
+```
+
+### **Required: Seed the Database**
+
+⚠️ **Important:** This project requires seeding the database with TVMaze data to function properly. The application expects TV shows, distributors, and their relationships to be present.
+
+#### Seed with TVMaze Data (Required)
+```bash
+# This command is REQUIRED to populate the database with all necessary data
+docker-compose exec web bundle exec rake tvmaze:seed
+```
+
+**This command will populate your database with:**
+- **~2,500 TV Shows** from TVMaze API (title, description, genre, ratings, etc.)
+- **Major Distributors** (Netflix, HBO Max, Amazon Prime Video, Disney+, Hulu, BBC iPlayer, etc.)
+- **Show-Distributor Relationships** (which shows are on which platforms)
+- **Release Dates** (premiere dates and regional releases)
+
+**⏱️ Note:** The seeding process takes several minutes due to API rate limiting. You'll see progress indicators during the process.
+
+#### Verify Seeding Worked
+```bash
+# Check that data was imported successfully
+docker-compose exec web bundle exec rails runner "puts 'TV Shows: #{TvShow.count}, Distributors: #{Distributor.count}'"
+```
+
+You should see output like: `TV Shows: 2487, Distributors: 156`
+
+#### Alternative Seeding Options (Optional)
+```bash
+# If you only want distributors without TV shows
+docker-compose exec web bundle exec rake tvmaze:seed_distributors
+```

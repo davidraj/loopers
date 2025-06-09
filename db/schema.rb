@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 4) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_09_000940) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,20 @@ ActiveRecord::Schema[8.0].define(version: 4) do
     t.index ["active"], name: "index_distributors_on_active"
     t.index ["country_code"], name: "index_distributors_on_country_code"
     t.index ["name"], name: "index_distributors_on_name", unique: true
+  end
+
+  create_table "episodes", force: :cascade do |t|
+    t.bigint "tv_show_id", null: false
+    t.string "title"
+    t.text "summary"
+    t.date "air_date"
+    t.integer "season_number"
+    t.integer "episode_number"
+    t.integer "tvmaze_id"
+    t.integer "runtime"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tv_show_id"], name: "index_episodes_on_tv_show_id"
   end
 
   create_table "release_dates", force: :cascade do |t|
@@ -78,6 +92,12 @@ ActiveRecord::Schema[8.0].define(version: 4) do
     t.string "country_of_origin", limit: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "tvmaze_id"
+    t.date "premiered_at"
+    t.string "image_url"
+    t.text "summary"
+    t.string "network_name"
+    t.decimal "rating"
     t.index ["genre"], name: "index_tv_shows_on_genre"
     t.index ["imdb_rating"], name: "index_tv_shows_on_imdb_rating"
     t.index ["language"], name: "index_tv_shows_on_language"
@@ -86,6 +106,7 @@ ActiveRecord::Schema[8.0].define(version: 4) do
     t.index ["title"], name: "index_tv_shows_on_title"
   end
 
+  add_foreign_key "episodes", "tv_shows"
   add_foreign_key "release_dates", "distributors"
   add_foreign_key "release_dates", "tv_shows"
   add_foreign_key "tv_show_distributors", "distributors"

@@ -1,88 +1,17 @@
-<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-  <p style="margin-bottom: 20px;">
-    <%= link_to "← Back to Shows", tv_shows_path, style: "color: #3498db; text-decoration: none; font-weight: bold; font-size: 16px;" %>
-  </p>
+<h1><%= @tv_show.title %></h1>
 
-  <table width="100%" style="background-color: #ffffff; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden;">
-    <tr>
-      <td style="padding: 30px;">
-        <table width="100%">
-          <tr>
-            <% if @tv_show.image_url %>
-              <td width="300" style="vertical-align: top; padding-right: 30px;">
-                <img src="<%= @tv_show.image_url %>" alt="<%= @tv_show.title %>" style="width: 100%; border-radius: 10px;">
-              </td>
-            <% end %>
-            <td style="vertical-align: top;">
-              <h1 style="color: #2c3e50; margin-bottom: 20px; font-size: 2.5rem;"><%= @tv_show.title %></h1>
-              
-              <table width="100%" style="background-color: #e8f4fd; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <tr>
-                  <td width="50%" style="vertical-align: top;">
-                    <p style="margin: 8px 0; color: #2c3e50;"><strong>📡 Status:</strong> <span style="color: #7f8c8d;"><%= @tv_show.status %></span></p>
-                    <p style="margin: 8px 0; color: #2c3e50;"><strong>🎭 Genre:</strong> <span style="color: #7f8c8d;"><%= @tv_show.genre %></span></p>
-                    <p style="margin: 8px 0; color: #2c3e50;"><strong>🌍 Language:</strong> <span style="color: #7f8c8d;"><%= @tv_show.language %></span></p>
-                    <p style="margin: 8px 0; color: #2c3e50;"><strong>📺 Network:</strong> <span style="color: #7f8c8d;"><%= @tv_show.network_name %></span></p>
-                  </td>
-                  <td width="50%" style="vertical-align: top;">
-                    <p style="margin: 8px 0; color: #2c3e50;"><strong>⭐ Rating:</strong> <span style="color: #7f8c8d;"><%= @tv_show.rating || "N/A" %></span></p>
-                    <p style="margin: 8px 0; color: #2c3e50;"><strong>⏱️ Runtime:</strong> <span style="color: #7f8c8d;"><%= @tv_show.runtime_minutes %> min</span></p>
-                    <p style="margin: 8px 0; color: #2c3e50;"><strong>📅 Premiered:</strong> <span style="color: #7f8c8d;"><%= @tv_show.premiered_at %></span></p>
-                    <p style="margin: 8px 0; color: #2c3e50;"><strong>🏳️ Country:</strong> <span style="color: #7f8c8d;"><%= @tv_show.country_of_origin %></span></p>
-                  </td>
-                </tr>
-              </table>
-              
-              <% if @tv_show.summary %>
-                <table width="100%" style="background-color: #fef9e7; padding: 20px; border-radius: 10px;">
-                  <tr>
-                    <td>
-                      <h3 style="color: #f39c12; margin-bottom: 15px;">📖 Summary</h3>
-                      <p style="color: #7f8c8d; line-height: 1.6;"><%= strip_tags(@tv_show.summary).html_safe %></p>
-                    </td>
-                  </tr>
-                </table>
-              <% end %>
-            </td>
-          </tr>
-        </table>
-        
-        <table width="100%" style="margin-top: 30px;">
-          <tr>
-            <td>
-              <h3 style="color: #2c3e50; margin-bottom: 20px; font-size: 1.5rem;">🎬 Episodes (<%= @episodes.count %>)</h3>
-              
-              <% @episodes.group_by(&:season_number).each do |season, episodes| %>
-                <table width="100%" style="background-color: #3498db; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
-                  <tr>
-                    <td>
-                      <h4 style="color: white; margin: 0; font-size: 1.2rem;">Season <%= season %> (<%= episodes.count %> episodes)</h4>
-                    </td>
-                  </tr>
-                </table>
-                
-                <% episodes.each do |episode| %>
-                  <table width="100%" style="background-color: #f8f9fa; padding: 12px; margin-bottom: 8px; border-radius: 5px; border-left: 4px solid #3498db;">
-                    <tr>
-                      <td>
-                        <strong style="color: #2c3e50;">S<%= episode.season_number %>E<%= episode.episode_number %>: <%= episode.title %></strong>
-                        <% if episode.air_date %>
-                          <span style="color: #7f8c8d; margin-left: 15px; font-size: 14px;">(<%= episode.air_date %>)</span>
-                        <% end %>
-                      </td>
-                      <td style="text-align: right;">
-                        <% if episode.runtime %>
-                          <span style="color: #7f8c8d; font-size: 14px;"><%= episode.runtime %> min</span>
-                        <% end %>
-                      </td>
-                    </tr>
-                  </table>
-                <% end %>
-              <% end %>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<div class="tv-show-details">
+  <p><strong>Description:</strong> <%= @tv_show.description %></p>
+  <p><strong>Genre:</strong> <%= @tv_show.genre %></p>
+  <p><strong>Country:</strong> <%= @tv_show.country_of_origin %></p>
+  <p><strong>Network:</strong> <%= @tv_show.network_name %></p>
+  <p><strong>IMDB Rating:</strong> <%= @tv_show.imdb_rating %></p>
+  <p><strong>Total Seasons:</strong> <%= @tv_show.total_seasons %></p>
+  <p><strong>Total Episodes:</strong> <%= @tv_show.total_episodes %></p>
+  <p><strong>Status:</strong> <%= @tv_show.status.humanize %></p>
+  <p><strong>Language:</strong> <%= @tv_show.language %></p>
+  <p><strong>Runtime:</strong> <%= @tv_show.runtime_minutes %> minutes</p>
+  <p><strong>Original Air Date:</strong> <%= @tv_show.original_air_date %></p>
 </div>
+
+<%= link_to 'Back to TV Shows', tv_shows_path %>

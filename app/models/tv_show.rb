@@ -1,9 +1,8 @@
 class TvShow < ApplicationRecord
   # Validations
   validates :title, presence: true
-
   validates :genre, presence: true
-  validates :release_date, presence: true
+  validates :original_air_date, presence: true  # Changed from release_date to original_air_date
 
   # Associations
   has_many :episodes, dependent: :destroy
@@ -20,10 +19,9 @@ class TvShow < ApplicationRecord
   scope :by_status, ->(status) { where(status: status) }
   scope :search, ->(query) { where("title ILIKE ?", "%#{query}%") }
   scope :by_genre, ->(genre) { where(genre: genre) }
-  scope :released_after, ->(date) { where('release_date > ?', date) }
+  scope :released_after, ->(date) { where('original_air_date > ?', date) }  # Changed from release_date
 
   # Analytical Methods
-
   # Query 1: TV Shows with Episode Statistics using Window Functions
   def self.shows_with_episode_stats
     query = <<-SQL
@@ -32,20 +30,20 @@ class TvShow < ApplicationRecord
           tv_shows.id,
           tv_shows.title,
           tv_shows.genre,
-          tv_shows.release_date,
+          tv_shows.original_air_date,  -- Changed from release_date
           COUNT(episodes.id) as total_episodes,
           AVG(episodes.duration) as avg_episode_duration,
           ROW_NUMBER() OVER (PARTITION BY tv_shows.genre ORDER BY COUNT(episodes.id) DESC) as genre_rank,
           RANK() OVER (ORDER BY COUNT(episodes.id) DESC) as overall_rank
         FROM tv_shows
         LEFT JOIN episodes ON tv_shows.id = episodes.tv_show_id
-        GROUP BY tv_shows.id, tv_shows.title, tv_shows.genre, tv_shows.release_date
+        GROUP BY tv_shows.id, tv_shows.title, tv_shows.genre, tv_shows.original_air_date
       )
       SELECT 
         id,
         title,
         genre,
-        release_date,
+        original_air_date,  -- Changed from release_date
         total_episodes,
         ROUND(avg_episode_duration, 2) as avg_episode_duration,
         genre_rank,
@@ -112,8 +110,8 @@ class TvShow < ApplicationRecord
           AVG(episodes.duration) as avg_episode_duration,
           COUNT(DISTINCT tv_show_distributors.distributor_id) as unique_distributors,
           COUNT(CASE WHEN tv_show_distributors.exclusive = true THEN 1 END) as exclusive_distributions,
-          MIN(tv_shows.release_date) as earliest_show,
-          MAX(tv_shows.release_date) as latest_show
+          MIN(tv_shows.original_air_date) as earliest_show,  -- Changed from release_date
+          MAX(tv_shows.original_air_date) as latest_show     -- Changed from release_date
         FROM tv_shows
         LEFT JOIN episodes ON tv_shows.id = episodes.tv_show_id
         LEFT JOIN tv_show_distributors ON tv_shows.id = tv_show_distributors.tv_show_id

@@ -13,12 +13,13 @@ rescue ActiveRecord::PendingMigrationError => e
 end
 
 RSpec.configure do |config|
-  config.fixture_paths = [Rails.root.join('spec/fixtures')]
-  config.use_transactional_fixtures = false
+  config.fixture_paths = ["#{::Rails.root}/spec/fixtures"]
+  config.use_transactional_fixtures = true
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!
-
-  # Database Cleaner configuration
+  
+  config.include FactoryBot::Syntax::Methods
+  
   config.before(:suite) do
     DatabaseCleaner.allow_remote_database_url = true
     DatabaseCleaner.strategy = :transaction
@@ -29,16 +30,5 @@ RSpec.configure do |config|
     DatabaseCleaner.cleaning do
       example.run
     end
-  end
-
-  # FactoryBot configuration
-  config.include FactoryBot::Syntax::Methods
-end
-
-# Shoulda Matchers configuration
-Shoulda::Matchers.configure do |config|
-  config.integrate do |with|
-    with.test_framework :rspec
-    with.library :rails
   end
 end

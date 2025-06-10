@@ -1,12 +1,11 @@
 puts "🧹 Clearing existing data..."
-Episode.destroy_all if defined?(Episode)
+Episode.destroy_all
 TvShow.destroy_all
 puts "  - Cleared episodes"
 puts "  - Cleared TV shows"
 
 puts "📺 Creating sample TV shows..."
 
-puts "Creating Breaking Bad..."
 breaking_bad = TvShow.create!(
   title: "Breaking Bad",
   description: "A high school chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine.",
@@ -23,8 +22,8 @@ breaking_bad = TvShow.create!(
   tvmaze_id: 169,
   premiered_at: "2008-01-20"
 )
+puts "Creating Breaking Bad..."
 
-puts "Creating The Office..."
 the_office = TvShow.create!(
   title: "The Office",
   description: "A mockumentary on a group of typical office workers.",
@@ -41,6 +40,7 @@ the_office = TvShow.create!(
   tvmaze_id: 526,
   premiered_at: "2005-03-24"
 )
+puts "Creating The Office..."
 
 puts "✅ Created #{TvShow.count} TV shows"
 puts "🎬 Seeding complete!"

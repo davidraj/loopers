@@ -5,9 +5,13 @@ RSpec.describe 'Api::V1::TvShows', type: :request do
   let(:tv_show) { tv_shows.first }
   let(:headers) { { 'Content-Type' => 'application/json' } }
 
-  describe 'GET /api/v1/tvshows' do
+  before do
+    host! 'localhost'
+  end
+
+  describe 'GET /api/v1/tv_shows' do
     context 'without filters' do
-      before { get '/api/v1/tvshows', headers: headers }
+      before { get '/api/v1/tv_shows', headers: headers }
 
       it 'returns success status' do
         expect(response).to have_http_status(:success)
@@ -42,7 +46,7 @@ RSpec.describe 'Api::V1::TvShows', type: :request do
     end
 
     context 'with pagination' do
-      before { get '/api/v1/tvshows?page=1&per_page=2', headers: headers }
+      before { get '/api/v1/tv_shows?page=1&per_page=2', headers: headers }
 
       it 'respects per_page parameter' do
         json_response = JSON.parse(response.body)
@@ -64,7 +68,7 @@ RSpec.describe 'Api::V1::TvShows', type: :request do
       let!(:us_show) { create(:tv_show, :us_show) }
       let!(:uk_show) { create(:tv_show, :uk_show) }
 
-      before { get '/api/v1/tvshows?country=United States', headers: headers }
+      before { get '/api/v1/tv_shows?country=United States', headers: headers }
 
       it 'filters by country' do
         json_response = JSON.parse(response.body)
@@ -78,7 +82,7 @@ RSpec.describe 'Api::V1::TvShows', type: :request do
       let!(:high_rated_show) { create(:tv_show, :high_rated) }
       let!(:low_rated_show) { create(:tv_show, imdb_rating: 6.0) }
 
-      before { get '/api/v1/tvshows?rating=8.0', headers: headers }
+      before { get '/api/v1/tv_shows?rating=8.0', headers: headers }
 
       it 'filters by minimum rating' do
         json_response = JSON.parse(response.body)
@@ -91,7 +95,7 @@ RSpec.describe 'Api::V1::TvShows', type: :request do
       let!(:drama_show) { create(:tv_show, genre: 'Drama') }
       let!(:comedy_show) { create(:tv_show, genre: 'Comedy') }
 
-      before { get '/api/v1/tvshows?genre=Drama', headers: headers }
+      before { get '/api/v1/tv_shows?genre=Drama', headers: headers }
 
       it 'filters by genre' do
         json_response = JSON.parse(response.body)
@@ -101,9 +105,9 @@ RSpec.describe 'Api::V1::TvShows', type: :request do
     end
   end
 
-  describe 'GET /api/v1/tvshows/:id' do
+  describe 'GET /api/v1/tv_shows/:id' do
     context 'when tv show exists' do
-      before { get "/api/v1/tvshows/#{tv_show.id}", headers: headers }
+      before { get "/api/v1/tv_shows/#{tv_show.id}", headers: headers }
 
       it 'returns success status' do
         expect(response).to have_http_status(:success)
@@ -128,7 +132,7 @@ RSpec.describe 'Api::V1::TvShows', type: :request do
     end
 
     context 'when tv show does not exist' do
-      before { get '/api/v1/tvshows/999999', headers: headers }
+      before { get '/api/v1/tv_shows/999999', headers: headers }
 
       it 'returns not found status' do
         expect(response).to have_http_status(:not_found)

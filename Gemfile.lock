@@ -355,7 +355,7 @@ DEPENDENCIES
   rspec-rails
   rubocop-rails-omakase
   selenium-webdriver
-  shoulda-matchers
+  shoulda-matchers (~> 6.0)
   stimulus-rails
   turbo-rails
   web-console

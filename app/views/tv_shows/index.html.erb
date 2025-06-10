@@ -1,0 +1,62 @@
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+  <table width="100%" style="background-color: #3498db; padding: 20px; margin-bottom: 30px; border-radius: 10px; color: white;">
+    <tr>
+      <td style="text-align: center;">
+        <h2 style="color: white; margin: 0 0 10px 0; font-size: 24px;">📊 Database Statistics</h2>
+        <strong style="font-size: 18px;">Total Shows: <%= TvShow.count %></strong> | 
+        <strong style="font-size: 18px;">Total Episodes: <%= Episode.count %></strong>
+      </td>
+    </tr>
+  </table>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px;">
+    <% @tv_shows.first(12).each do |show| %>
+      <table width="100%" style="background-color: #ffffff; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden;">
+        <tr>
+          <td style="padding: 0;">
+            <% if show.image_url %>
+              <div style="text-align: center; margin-bottom: 0;">
+                <img src="<%= show.image_url %>" alt="<%= show.title %>" style="width: 100%; height: 220px; object-fit: cover;">
+              </div>
+            <% end %>
+            
+            <table width="100%" style="background-color: #e8f4fd; padding: 15px; margin: 0;">
+              <tr>
+                <td style="text-align: center;">
+                  <h3 style="margin: 0; color: #2c3e50; font-size: 18px;">
+                    <%= link_to show.title, tv_show_path(show), style: "color: #3498db; text-decoration: none; font-weight: bold;" %>
+                  </h3>
+                </td>
+              </tr>
+            </table>
+            
+            <table width="100%" style="background-color: #f8f9fa; padding: 15px; margin: 0;">
+              <tr>
+                <td>
+                  <p style="margin: 6px 0; color: #2c3e50; font-size: 14px;"><strong>🎭 Genre:</strong> <span style="color: #7f8c8d;"><%= show.genre %></span></p>
+                  <p style="margin: 6px 0; color: #2c3e50; font-size: 14px;"><strong>📡 Status:</strong> <span style="color: #7f8c8d;"><%= show.status %></span></p>
+                  <p style="margin: 6px 0; color: #2c3e50; font-size: 14px;"><strong>⭐ Rating:</strong> <span style="color: #7f8c8d;"><%= show.rating || "N/A" %></span></p>
+                  <p style="margin: 6px 0; color: #2c3e50; font-size: 14px;"><strong>📺 Network:</strong> <span style="color: #7f8c8d;"><%= show.network_name %></span></p>
+                  <p style="margin: 6px 0; color: #2c3e50; font-size: 14px;"><strong>🎬 Episodes:</strong> <span style="color: #7f8c8d;"><%= show.episodes.count %></span></p>
+                </td>
+              </tr>
+            </table>
+            
+            <% if show.summary %>
+              <table width="100%" style="background-color: #fef9e7; padding: 15px; margin: 0;">
+                <tr>
+                  <td>
+                    <h4 style="margin: 0 0 8px 0; color: #f39c12; font-size: 14px;">📖 Summary</h4>
+                    <p style="color: #7f8c8d; font-size: 13px; line-height: 1.4; margin: 0;">
+                      <%= truncate(strip_tags(show.summary), length: 120) %>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            <% end %>
+          </td>
+        </tr>
+      </table>
+    <% end %>
+  </div>
+</div>

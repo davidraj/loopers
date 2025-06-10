@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_10_122513) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_10_184923) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -106,9 +106,29 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_10_122513) do
     t.index ["title"], name: "index_tv_shows_on_title"
   end
 
+  create_table "user_tv_shows", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "tv_show_id", null: false
+    t.string "status"
+    t.datetime "watched_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tv_show_id"], name: "index_user_tv_shows_on_tv_show_id"
+    t.index ["user_id"], name: "index_user_tv_shows_on_user_id"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.string "name"
+    t.string "email"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   add_foreign_key "episodes", "tv_shows"
   add_foreign_key "release_dates", "distributors"
   add_foreign_key "release_dates", "tv_shows"
   add_foreign_key "tv_show_distributors", "distributors"
   add_foreign_key "tv_show_distributors", "tv_shows"
+  add_foreign_key "user_tv_shows", "tv_shows"
+  add_foreign_key "user_tv_shows", "users"
 end

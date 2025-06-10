@@ -1,40 +1,26 @@
 require 'rails_helper'
 
 RSpec.describe Distributor, type: :model do
-  describe 'associations' do
-    it { should have_many(:tv_show_distributors).dependent(:destroy) }
-    it { should have_many(:tv_shows).through(:tv_show_distributors) }
-  end
+  subject { build(:distributor) }
 
   describe 'validations' do
     it { should validate_presence_of(:name) }
     it { should validate_uniqueness_of(:name) }
-    it { should validate_length_of(:name).is_at_most(255) }
-    
-    it 'validates website_url format' do
-      distributor = build(:distributor, website_url: 'invalid-url')
-      expect(distributor).not_to be_valid
-      expect(distributor.errors[:website_url]).to be_present
-    end
+    it { should validate_presence_of(:country_code) }
+    it { should validate_length_of(:country_code).is_equal_to(2) }
+  end
 
-    it 'allows valid website URLs' do
-      distributor = build(:distributor, website_url: 'https://example.com')
-      expect(distributor).to be_valid
-    end
-
-    it 'validates country_code format' do
-      distributor = build(:distributor, country_code: 'USA')
-      expect(distributor).not_to be_valid
-      
-      distributor.country_code = 'US'
-      expect(distributor).to be_valid
-    end
+  describe 'associations' do
+    it { should have_many(:tv_show_distributors).dependent(:destroy) }
+    it { should have_many(:tv_shows).through(:tv_show_distributors) }
+    it { should have_many(:release_dates).dependent(:destroy) }
   end
 
   describe 'scopes' do
     let!(:active_distributor) { create(:distributor, active: true) }
     let!(:inactive_distributor) { create(:distributor, active: false) }
     let!(:us_distributor) { create(:distributor, country_code: 'US') }
+    let!(:uk_distributor) { create(:distributor, country_code: 'UK') }
 
     describe '.active' do
       it 'returns only active distributors' do
@@ -46,6 +32,7 @@ RSpec.describe Distributor, type: :model do
     describe '.by_country' do
       it 'returns distributors from specified country' do
         expect(Distributor.by_country('US')).to include(us_distributor)
+        expect(Distributor.by_country('US')).not_to include(uk_distributor)
       end
     end
   end

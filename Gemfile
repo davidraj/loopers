@@ -1,5 +1,6 @@
 source "https://rubygems.org"
 
+
 ruby "3.2.8"
 
 gem "rails", "~> 8.0.2"
@@ -11,21 +12,25 @@ gem "stimulus-rails"
 gem "jbuilder"
 gem "redis", ">= 4.0.1"
 gem "bootsnap", require: false
+gem "image_processing", "~> 1.2"
+gem "kaminari"
 
-# Pagination
-gem 'kaminari'
-
-# Development and test gems
 group :development, :test do
-  gem 'rspec-rails'
-  gem 'factory_bot_rails'
+  gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+  gem "brakeman", require: false
+  gem "rubocop-rails-omakase", require: false
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  gem "faker"
+  gem "database_cleaner-active_record"
 end
 
 group :development do
   gem "web-console"
-  gem "listen", "~> 3.3"
 end
 
 group :test do
-  gem 'database_cleaner-active_record'
+  gem "capybara"
+  gem "selenium-webdriver"
+  gem "shoulda-matchers"
 end

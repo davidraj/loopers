@@ -1,12 +1,11 @@
 FactoryBot.define do
   factory :episode do
-    tv_show { nil }
-    title { "MyString" }
-    summary { "MyText" }
-    air_date { "2025-06-08" }
-    season_number { 1 }
-    episode_number { 1 }
-    tvmaze_id { 1 }
-    runtime { 1 }
+    association :tv_show
+    title { Faker::Lorem.sentence(word_count: 3) }
+    season_number { rand(1..5) }
+    episode_number { rand(1..24) }
+    air_date { Faker::Date.between(from: 2.years.ago, to: Date.current) }
+    runtime_minutes { [30, 45, 60].sample }
+    summary { Faker::Lorem.paragraph }
   end
 end

@@ -1,0 +1,11 @@
+ruby_version: 3.2
+
+ignore:
+  - 'bin/**/*'
+  - 'config/**/*'
+  - 'db/**/*'
+  - 'vendor/**/*'
+  - 'node_modules/**/*'
+  - 'tmp/**/*'
+  - 'log/**/*'
+  - 'public/**/*'

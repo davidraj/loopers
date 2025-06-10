@@ -1,24 +1,31 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", as: :rails_health_check
-
-  # Render dynamic PWA files from app/views/pwa/*
-  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-
+  # Health check endpoint
+  get '/health', to: 'health#show'
+  
   # API routes
   namespace :api do
     namespace :v1 do
-      resources :tvshows, only: [:index, :show], controller: 'tv_shows'
+      resources :tv_shows do
+        resources :episodes
+      end
+      
+      resources :distributors do
+        resources :tv_shows, only: [:index]
+      end
+      
+      resources :users do
+        resources :tv_shows, only: [:index, :create, :destroy]
+      end
+      
+      # Analytics endpoints
+      namespace :analytics do
+        get :episode_stats, to: 'analytics#episode_stats'
+        get :distribution_analysis, to: 'analytics#distribution_analysis'
+        get :genre_performance, to: 'analytics#genre_performance'
+      end
     end
   end
-
-  # Web interface routes (optional)
-  resources :tv_shows, only: [:index, :show]
   
   # Root route
-  root 'tv_shows#index'
+  root 'api/v1/tv_shows#index'
 end

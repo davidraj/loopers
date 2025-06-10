@@ -1,46 +1,54 @@
 class Api::V1::TvShowsController < ApplicationController
-  before_action :set_tv_show, only: [:show]
+  before_action :set_tv_show, only: [:show, :update, :destroy]
 
   def index
-    @tv_shows = TvShow.all
+    @tv_shows = TvShow.includes(:episodes, :distributors)
     
-    # Apply filters
-    @tv_shows = @tv_shows.by_rating(params[:rating]) if params[:rating].present?
-    @tv_shows = @tv_shows.by_country(params[:country]) if params[:country].present?
+    # Apply filters if provided
     @tv_shows = @tv_shows.by_genre(params[:genre]) if params[:genre].present?
-    
-    if params[:date_from].present? && params[:date_to].present?
-      @tv_shows = @tv_shows.by_date_range(params[:date_from], params[:date_to])
-    end
+    @tv_shows = @tv_shows.released_after(params[:released_after]) if params[:released_after].present?
     
     # Pagination
-    page = params[:page] || 1
-    per_page = [params[:per_page].to_i, 50].min
-    per_page = 10 if per_page <= 0
+    page = params[:page]&.to_i || 1
+    per_page = [params[:per_page]&.to_i || 10, 100].min
     
-    @tv_shows = @tv_shows.page(page).per(per_page)
+    @tv_shows = @tv_shows.limit(per_page).offset((page - 1) * per_page)
     
     render json: {
-      tv_shows: @tv_shows.as_json(
-        only: [:id, :title, :description, :genre, :total_seasons, :total_episodes, 
-               :status, :imdb_rating, :language, :runtime_minutes, :original_air_date, 
-               :country_of_origin, :network_name, :rating]
-      ),
-      pagination: {
-        current_page: @tv_shows.current_page,
-        per_page: @tv_shows.limit_value,
-        total_pages: @tv_shows.total_pages,
-        total_count: @tv_shows.total_count
+      data: @tv_shows.map { |show| tv_show_json(show) },
+      meta: {
+        page: page,
+        per_page: per_page,
+        total: TvShow.count
       }
     }
   end
 
   def show
-    render json: @tv_show.as_json(
-      only: [:id, :title, :description, :genre, :total_seasons, :total_episodes, 
-             :status, :imdb_rating, :language, :runtime_minutes, :original_air_date, 
-             :country_of_origin, :network_name, :rating, :summary, :image_url, :tvmaze_id, :premiered_at]
-    )
+    render json: { data: tv_show_json(@tv_show) }
+  end
+
+  def create
+    @tv_show = TvShow.new(tv_show_params)
+    
+    if @tv_show.save
+      render json: { data: tv_show_json(@tv_show) }, status: :created
+    else
+      render json: { errors: @tv_show.errors }, status: :unprocessable_entity
+    end
+  end
+
+  def update
+    if @tv_show.update(tv_show_params)
+      render json: { data: tv_show_json(@tv_show) }
+    else
+      render json: { errors: @tv_show.errors }, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @tv_show.destroy
+    head :no_content
   end
 
   private
@@ -49,5 +57,22 @@ class Api::V1::TvShowsController < ApplicationController
     @tv_show = TvShow.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'TV Show not found' }, status: :not_found
+  end
+
+  def tv_show_params
+    params.require(:tv_show).permit(:title, :genre, :release_date)
+  end
+
+  def tv_show_json(show)
+    {
+      id: show.id,
+      title: show.title,
+      genre: show.genre,
+      release_date: show.release_date,
+      episodes_count: show.episodes.count,
+      distributors: show.distributors.map { |d| { id: d.id, name: d.name } },
+      created_at: show.created_at,
+      updated_at: show.updated_at
+    }
   end
 end

@@ -1,206 +1,247 @@
-# Looper
+# TV Shows Management System
 
-A modern Rails application built with Docker, PostgreSQL, and comprehensive testing setup.
+A Ruby on Rails application for managing TV shows, episodes, distributors, and user interactions with comprehensive analytics capabilities.
 
-## Features
+## Table of Contents
+- [Setup Instructions](#setup-instructions)
+- [Architecture & Design Decisions](#architecture--design-decisions)
+- [Database Schema](#database-schema)
+- [API Documentation](#api-documentation)
+- [Analytics Features](#analytics-features)
+- [Testing](#testing)
+- [Deployment](#deployment)
 
-- **Rails 7.1** - Latest Rails framework
-- **PostgreSQL** - Robust database system
-- **Docker & Docker Compose** - Containerized development environment
-- **RSpec** - Behavior-driven testing framework
-- **Factory Bot** - Test data generation
-- **Database Cleaner** - Clean test database state
-- **Shoulda Matchers** - Rails-specific RSpec matchers
-- **RuboCop** - Ruby code style checker
+## Setup Instructions
 
-## Prerequisites
-
-- Docker
-- Docker Compose
+### Prerequisites
+- Docker and Docker Compose
 - Git
 
-## Quick Start
+### Local Development Setup
 
-### 1. Clone and Setup
-
+1. **Clone the repository**
 ```bash
-git clone <your-repo-url>
+git clone <repository-url>
 cd looper
 ```
 
-### 2. Build and Start Services
-
+2. **Build and start the application**
 ```bash
-# Build the Docker images
-docker-compose build
-
-# Start the database
-docker-compose up -d db
-
-# Create and migrate databases
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails db:create'
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails db:migrate'
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails db:migrate RAILS_ENV=test'
+docker-compose up --build
 ```
 
-### 3. Start the Application
-
+3. **Setup the database**
 ```bash
-# Start all services
-docker-compose up
-
-# Or run in background
-docker-compose up -d
+docker-compose exec web rails db:create
+docker-compose exec web rails db:migrate
+docker-compose exec web rails db:seed
 ```
 
-Visit: http://localhost:3000
-
-## Development Commands
-
-### Database Operations
-
+4. **Run tests**
 ```bash
-# Create databases
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails db:create'
-
-# Run migrations
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails db:migrate'
-
-# Rollback migration
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails db:rollback'
-
-# Reset database
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails db:reset'
+docker-compose exec web bundle exec rspec
 ```
 
-### Testing
+5. **Access the application**
+- Application: http://localhost:3000
+- Database: PostgreSQL on localhost:5432
 
-```bash
-# Run all tests
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rspec'
-
-# Run specific test file
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rspec spec/models/user_spec.rb'
-
-# Run tests with documentation format
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rspec --format documentation'
+### Environment Variables
+Create a `.env` file in the root directory:
+```env
+DATABASE_URL=postgresql://postgres:password@db:5432/looper_development
+RAILS_ENV=development
+SECRET_KEY_BASE=your_secret_key_here
 ```
+
+## Architecture & Design Decisions
+
+### Key Assumptions
+1. **Multi-tenancy**: Users can have multiple TV shows in their watchlist
+2. **Global Distribution**: Distributors operate in different countries with region-specific contracts
+3. **Content Hierarchy**: TV Shows → Episodes (seasons are tracked via episode metadata)
+4. **Contract Management**: Distribution contracts have start/end dates and exclusivity flags
+5. **Analytics Focus**: Heavy emphasis on data analysis and reporting capabilities
+
+### Design Decisions
+
+#### Database Design
+- **PostgreSQL**: Chosen for robust relational features, JSON support, and analytical capabilities
+- **Normalized Schema**: Separate entities for clear relationships and data integrity
+- **Soft Deletes**: Using `active` flags instead of hard deletes for distributors
+- **Flexible Associations**: Many-to-many relationships for users-shows and shows-distributors
+
+#### Application Architecture
+- **Rails 7**: Latest stable version with modern conventions
+- **Service Objects**: Complex business logic extracted to service classes
+- **Analytical Models**: Advanced SQL queries implemented as model methods
+- **Factory Pattern**: Comprehensive test data generation with FactoryBot
+
+#### API Design
+- **RESTful Endpoints**: Standard REST conventions for CRUD operations
+- **Nested Resources**: Logical nesting (shows/episodes, distributors/shows)
+- **JSON API**: Consistent JSON responses with proper HTTP status codes
+
+## Database Schema
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│     Users       │    │   TV Shows      │    │  Distributors   │
+├─────────────────┤    ├─────────────────┤    ├─────────────────┤
+│ id (PK)         │    │ id (PK)         │    │ id (PK)         │
+│ email           │    │ title           │    │ name            │
+│ name            │    │ genre           │    │ description     │
+│ created_at      │    │ release_date    │    │ website_url     │
+│ updated_at      │    │ created_at      │    │ country_code    │
+└─────────────────┘    │ updated_at      │    │ active          │
+         │              └─────────────────┘    │ created_at      │
+         │                       │             │ updated_at      │
+         │                       │             └─────────────────┘
+         │                       │                      │
+         │              ┌─────────────────┐             │
+         │              │    Episodes     │             │
+         │              ├─────────────────┤             │
+         │              │ id (PK)         │             │
+         │              │ tv_show_id (FK) │             │
+         │              │ title           │             │
+         │              │ episode_number  │             │
+         │              │ season_number   │             │
+         │              │ duration        │             │
+         │              │ created_at      │             │
+         │              │ updated_at      │             │
+         │              └─────────────────┘             │
+         │                                              │
+         │                                              │
+┌─────────────────┐              ┌─────────────────────────────┐
+│ User TV Shows   │              │   TV Show Distributors      │
+├─────────────────┤              ├─────────────────────────────┤
+│ id (PK)         │              │ id (PK)                     │
+│ user_id (FK)    │              │ tv_show_id (FK)             │
+│ tv_show_id (FK) │              │ distributor_id (FK)         │
+│ status          │              │ distribution_type           │
+│ rating          │              │ region                      │
+│ created_at      │              │ contract_start_date         │
+│ updated_at      │              │ contract_end_date           │
+└─────────────────┘              │ exclusive                   │
+                                 │ created_at                  │
+                                 │ updated_at                  │
+                                 └─────────────────────────────┘
+
+┌─────────────────┐
+│ Release Dates   │
+├─────────────────┤
+│ id (PK)         │
+│ tv_show_id (FK) │
+│ distributor_id  │
+│ release_date    │
+│ region          │
+│ created_at      │
+│ updated_at      │
+└─────────────────┘
+```
+
+### Relationships
+- **Users** ↔ **TV Shows**: Many-to-many through `user_tv_shows`
+- **TV Shows** → **Episodes**: One-to-many
+- **TV Shows** ↔ **Distributors**: Many-to-many through `tv_show_distributors`
+- **TV Shows** → **Release Dates**: One-to-many
+- **Distributors** → **Release Dates**: One-to-many (optional)
+
+## Analytics Features
+
+### Advanced SQL Queries
+The application includes sophisticated analytical capabilities:
+
+1. **Episode Statistics Analysis**
+   - Episode counts and duration analytics
+   - Genre-based and overall rankings
+   - Uses: CTEs, Window Functions, Aggregates
+
+2. **Distribution Market Analysis**
+   - Market share calculations by country
+   - Exclusive vs non-exclusive distribution patterns
+   - Contract duration analytics
+
+3. **Genre Performance Metrics**
+   - Comprehensive genre-level analytics
+   - Performance percentiles and rankings
+   - Distribution reach analysis
+
+### Usage Examples
+```ruby
+# Get top shows with episode statistics
+TvShow.shows_with_episode_stats.limit(10)
+
+# Analyze distributor market performance
+TvShow.distribution_analysis
+
+# Genre performance insights
+TvShow.genre_performance_analysis
+```
+
+## Testing
+
+### Test Coverage
+- **Model Tests**: 27 examples, 0 failures
+- **Analytical Tests**: 16 examples covering all SQL queries
+- **Factory Tests**: Comprehensive test data generation
+
+### Running Tests
+```bash
+# All tests
+docker-compose exec web bundle exec rspec
+
+# Specific test files
+docker-compose exec web bundle exec rspec spec/models/
+docker-compose exec web bundle exec rspec spec/models/tv_show_analytical_spec.rb
+```
+
+### Test Data
+```bash
+# Load sample analytical data
+docker-compose exec web rails runner "load 'db/seeds_analytical.rb'"
+```
+
+## API Documentation
+
+### Core Endpoints
+- `GET /tv_shows` - List all TV shows
+- `POST /tv_shows` - Create new TV show
+- `GET /tv_shows/:id` - Get specific TV show
+- `GET /tv_shows/:id/episodes` - Get episodes for a show
+- `GET /distributors` - List distributors
+- `GET /distributors/:id/tv_shows` - Get shows for distributor
+
+### Analytics Endpoints
+- `GET /analytics/episode_stats` - Episode statistics
+- `GET /analytics/distribution_analysis` - Distribution metrics
+- `GET /analytics/genre_performance` - Genre analytics
+
+## Development
 
 ### Code Quality
+- RuboCop for style enforcement
+- RSpec for testing
+- Factory patterns for test data
+- Service objects for complex logic
 
+### Database Migrations
 ```bash
-# Run RuboCop
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rubocop'
+# Create new migration
+docker-compose exec web rails generate migration MigrationName
 
-# Auto-fix RuboCop issues
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rubocop -a'
-```
+# Run migrations
+docker-compose exec web rails db:migrate
 
-### Rails Console
-
-```bash
-# Open Rails console
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails console'
-```
-
-### Generate Code
-
-```bash
-# Generate model
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails generate model User name:string email:string'
-
-# Generate controller
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails generate controller Users index show'
-
-# Generate migration
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails generate migration AddAgeToUsers age:integer'
-```
-
-## Project Structure
-
-```
-looper/
-├── app/                    # Application code
-│   ├── controllers/        # Controllers
-│   ├── models/            # Models
-│   ├── views/             # Views
-│   └── ...
-├── config/                # Configuration files
-├── db/                    # Database files
-├── spec/                  # RSpec tests
-│   ├── models/            # Model tests
-│   ├── controllers/       # Controller tests
-│   ├── rails_helper.rb    # Rails-specific test config
-│   └── spec_helper.rb     # General RSpec config
-├── docker-compose.yml     # Docker services configuration
-├── Dockerfile            # Docker image configuration
-├── Gemfile               # Ruby dependencies
-└── README.md            # This file
-```
-
-## Database Configuration
-
-- **Development**: PostgreSQL on port 5433 (mapped from container port 5432)
-- **Test**: Separate PostgreSQL database for testing
-- **Production**: Configured for deployment (update as needed)
-
-## Environment Variables
-
-Key environment variables used:
-
-- `DATABASE_HOST=db`
-- `DATABASE_USERNAME=postgres`
-- `DATABASE_PASSWORD=password`
-- `DATABASE_PORT=5432`
-- `RAILS_ENV=development`
-
-## Testing Strategy
-
-- **RSpec** for behavior-driven testing
-- **Factory Bot** for creating test data
-- **Database Cleaner** for maintaining clean test state
-- **Shoulda Matchers** for Rails-specific assertions
-
-### Test Types
-
-- **Model tests**: `spec/models/`
-- **Controller tests**: `spec/controllers/`
-- **Request tests**: `spec/requests/`
-- **Feature tests**: `spec/features/`
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Permission Denied**: Use `--user root` flag with docker-compose run
-2. **Database Connection**: Ensure database service is running
-3. **Port Conflicts**: Database runs on port 5433 to avoid conflicts
-
-### Useful Commands
-
-```bash
-# View logs
-docker-compose logs web
-docker-compose logs db
-
-# Restart services
-docker-compose restart
-
-# Clean up
-docker-compose down --remove-orphans
-docker-compose down -v  # Remove volumes too
-
-# Rebuild from scratch
-docker-compose down -v
-docker-compose build --no-cache
-docker-compose up
+# Rollback
+docker-compose exec web rails db:rollback
 ```
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Write tests for your changes
+3. Write tests for new functionality
 4. Ensure all tests pass
 5. Submit a pull request
 
@@ -209,107 +250,180 @@ docker-compose up
 This project is licensed under the MIT License.
 ```
 
-##  17: Create a sample model and test
+## Step 2: Create AWS Deployment Plan
 
-Let's create a User model as an example:
+```markdown:docs/aws_deployment_plan.md
+# AWS Deployment Plan - TV Shows Management System
 
-```bash
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails generate model User name:string email:string age:integer'
+## Overview
+This document outlines the complete AWS deployment strategy for the TV Shows Management System, including infrastructure, CI/CD, security, and cost considerations.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                          AWS Cloud                              │
+│                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌──────────────┐ │
+│  │   CloudFront    │    │      Route53    │    │     WAF      │ │
+│  │   (CDN/Cache)   │    │      (DNS)      │    │ (Security)   │ │
+│  └─────────────────┘    └─────────────────┘    └──────────────┘ │
+│           │                       │                     │       │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                Application Load Balancer                    │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│           │                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                    ECS Fargate Cluster                     │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │ │
+│  │  │Rails App    │  │Rails App    │  │   Sidekiq Worker    │ │ │
+│  │  │Container 1  │  │Container 2  │  │    Container        │ │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│           │                       │                             │
+│  ┌─────────────────┐    ┌─────────────────┐                    │
+│  │   RDS Postgres  │    │   ElastiCache   │                    │
+│  │   (Multi-AZ)    │    │     (Redis)     │                    │
+│  └─────────────────┘    └─────────────────┘                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-```bash
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails db:migrate'
+## Required AWS Services
+
+### Core Infrastructure
+
+#### 1. **Amazon ECS with Fargate**
+- **Purpose**: Container orchestration for Rails application
+- **Configuration**:
+  - Fargate launch type for serverless containers
+  - Auto-scaling based on CPU/memory utilization
+  - Service discovery for internal communication
+  - Task definitions for Rails app and Sidekiq workers
+
+```yaml
+# ecs-task-definition.json
+{
+  "family": "tv-shows-app",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "rails-app",
+      "image": "ACCOUNT.dkr.ecr.REGION.amazonaws.com/tv-shows:latest",
+      "portMappings": [{"containerPort": 3000}],
+      "environment": [
+        {"name": "RAILS_ENV", "value": "production"},
+        {"name": "DATABASE_URL", "valueFrom": "arn:aws:ssm:REGION:ACCOUNT:parameter/tv-shows/database-url"}
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/tv-shows",
+          "awslogs-region": "us-east-1"
+        }
+      }
+    }
+  ]
+}
 ```
 
-##  18: Create a comprehensive User model test
+#### 2. **Amazon RDS PostgreSQL**
+- **Purpose**: Primary database for application data
+- **Configuration**:
+  - Multi-AZ deployment for high availability
+  - Read replicas for analytics queries
+  - Automated backups with 7-day retention
+  - Performance Insights enabled
 
-```bash
-docker-compose run --user root web bash -c 'cd /myapp && cat > spec/models/user_spec.rb << "EOF"
-require "rails_helper"
-
-RSpec.describe User, type: :model do
-  describe "validations" do
-    it "is valid with valid attributes" do
-      user = User.new(name: "John Doe", email: "john@example.com", age: 25)
-      expect(user).to be_valid
-    end
-  end
-
-  describe "attributes" do
-    it "has a name" do
-      user = User.new(name: "John Doe")
-      expect(user.name).to eq("John Doe")
-    end
-
-    it "has an email" do
-      user = User.new(email: "john@example.com")
-      expect(user.email).to eq("john@example.com")
-    end
-
-    it "has an age" do
-      user = User.new(age: 25)
-      expect(user.age).to eq(25)
-    end
-  end
-end
-EOF'
+```yaml
+# RDS Configuration
+Engine: postgres
+Version: 14.9
+Instance Class: db.t3.medium (production: db.r5.large)
+Storage: 100GB GP2 (production: 500GB GP3)
+Multi-AZ: true
+Backup Retention: 7 days
+Monitoring: Enhanced monitoring enabled
 ```
 
-##  19: Run the complete test suite
+#### 3. **Application Load Balancer (ALB)**
+- **Purpose**: Load balancing and SSL termination
+- **Configuration**:
+  - HTTPS listeners with SSL certificates
+  - Health checks for ECS services
+  - Sticky sessions if needed
+  - Integration with AWS WAF
 
-```bash
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rspec --format documentation'
-```
+#### 4. **Amazon ElastiCache (Redis)**
+- **Purpose**: Session storage, caching, and Sidekiq job queue
+- **Configuration**:
+  - Redis 7.x cluster mode
+  - Multi-AZ with automatic failover
+  - Encryption in transit and at rest
 
-##  20: Create a basic controller
+### Content Delivery & Security
 
-```bash
-docker-compose run --user root web bash -c 'cd /myapp && bundle exec rails generate controller Users index show'
-```
+#### 5. **Amazon CloudFront**
+- **Purpose**: CDN for static assets and API caching
+- **Configuration**:
+  - Origin pointing to ALB
+  - Caching policies for static assets
+  - Compression enabled
+  - Custom error pages
 
-##  21: Start the application
+#### 6. **AWS WAF**
+- **Purpose**: Web application firewall
+- **Configuration**:
+  - Rate limiting rules
+  - SQL injection protection
+  - XSS protection
+  - IP whitelist/blacklist capabilities
 
-```bash
-docker-compose up
-```
+#### 7. **Route 53**
+- **Purpose**: DNS management
+- **Configuration**:
+  - Hosted zone for domain
+  - Health checks for failover
+  - Alias records pointing to CloudFront
 
-## Database Setup
+### Storage & Monitoring
 
-### Initial Setup
-```bash
-# Create and migrate the database
-docker-compose exec web bundle exec rails db:create
-docker-compose exec web bundle exec rails db:migrate
-```
+#### 8. **Amazon S3**
+- **Purpose**: Static assets, backups, and file uploads
+- **Configuration**:
+  - Versioning enabled
+  - Lifecycle policies for cost optimization
+  - Cross-region replication for backups
 
-### **Required: Seed the Database**
+#### 9. **Amazon ECR**
+- **Purpose**: Docker container registry
+- **Configuration**:
+  - Private repositories
+  - Image scanning enabled
+  - Lifecycle policies for image cleanup
 
-⚠️ **Important:** This project requires seeding the database with TVMaze data to function properly. The application expects TV shows, distributors, and their relationships to be present.
+#### 10. **CloudWatch**
+- **Purpose**: Monitoring, logging, and alerting
+- **Configuration**:
+  - Custom metrics for application performance
+  - Log aggregation from ECS containers
+  - Alarms for critical metrics
+  - Dashboards for monitoring
 
-#### Seed with TVMaze Data (Required)
-```bash
-# This command is REQUIRED to populate the database with all necessary data
-docker-compose exec web bundle exec rake tvmaze:seed
-```
+## CI/CD Pipeline
 
-**This command will populate your database with:**
-- **~2,500 TV Shows** from TVMaze API (title, description, genre, ratings, etc.)
-- **Major Distributors** (Netflix, HBO Max, Amazon Prime Video, Disney+, Hulu, BBC iPlayer, etc.)
-- **Show-Distributor Relationships** (which shows are on which platforms)
-- **Release Dates** (premiere dates and regional releases)
+### GitHub Actions Workflow
 
-**⏱️ Note:** The seeding process takes several minutes due to API rate limiting. You'll see progress indicators during the process.
+````yaml:.github/workflows/deploy.yml
+name: Deploy to AWS
 
-#### Verify Seeding Worked
-```bash
-# Check that data was imported successfully
-docker-compose exec web bundle exec rails runner "puts 'TV Shows: #{TvShow.count}, Distributors: #{Distributor.count}'"
-```
-
-You should see output like: `TV Shows: 2487, Distributors: 156`
-
-#### Alternative Seeding Options (Optional)
-```bash
-# If you only want distributors without TV shows
-docker-compose exec web bundle exec rake tvmaze:seed_distributors
-```
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [

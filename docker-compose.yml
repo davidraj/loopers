@@ -44,18 +44,16 @@ services:
     command: bundle exec rails server -b 0.0.0.0
 
   frontend:
-    build: 
-      context: /Users/davidrajsamuel/Documents/frontend
-      dockerfile: Dockerfile
+    build: /Users/davidrajsamuel/Documents/frontend
     ports:
       - "3001:3001"
     volumes:
       - /Users/davidrajsamuel/Documents/frontend:/app
       - /app/node_modules
     environment:
-      - REACT_APP_API_URL=http://localhost:3000
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
+      - REACT_APP_API_URL=http://host.docker.internal:3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - backend
 

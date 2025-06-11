@@ -25,4 +25,11 @@ Rails.application.configure do
   
   config.action_mailer.raise_delivery_errors = false
   config.action_mailer.perform_caching = false
+
+  # Allow connections from Docker containers
+  config.hosts << "backend"
+  config.hosts << /.*\.docker\.internal/
+  
+  # For development, you can also allow all hosts (less secure)
+  # config.hosts.clear
 end

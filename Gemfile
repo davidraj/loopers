@@ -14,6 +14,7 @@ gem "redis", ">= 4.0.1"
 gem "bootsnap", require: false
 gem "image_processing", "~> 1.2"
 gem "kaminari"
+gem 'rack-cors'
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

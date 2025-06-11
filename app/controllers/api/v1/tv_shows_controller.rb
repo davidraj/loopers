@@ -1,18 +1,31 @@
 class Api::V1::TvShowsController < ApplicationController
   before_action :set_tv_show, only: [:show, :update, :destroy]
+  before_action :set_cache_headers, only: [:index, :show]
 
   def index
     @tv_shows = TvShow.includes(:episodes, :distributors)
     
-    # Apply filters if provided
+    # Date range filtering (REQUIRED)
+    if params[:date_from].present?
+      @tv_shows = @tv_shows.where('original_air_date >= ?', params[:date_from])
+    end
+    if params[:date_to].present?
+      @tv_shows = @tv_shows.where('original_air_date <= ?', params[:date_to])
+    end
+    
+    # Distributor filtering (REQUIRED)
+    if params[:distributor].present?
+      @tv_shows = @tv_shows.joins(:distributors)
+                           .where(distributors: { name: params[:distributor] })
+    end
+    
+    # Existing filters
     @tv_shows = @tv_shows.by_genre(params[:genre]) if params[:genre].present?
-    @tv_shows = @tv_shows.released_after(params[:released_after]) if params[:released_after].present?
-    
-    # Add country filter
     @tv_shows = @tv_shows.where(country_of_origin: params[:country]) if params[:country].present?
-    
-    # Add rating filter
     @tv_shows = @tv_shows.where('imdb_rating >= ?', params[:rating]) if params[:rating].present?
+    
+    # Deterministic ordering for caching
+    @tv_shows = @tv_shows.order(:id)
     
     # Pagination
     page = params[:page]&.to_i || 1
@@ -65,6 +78,12 @@ class Api::V1::TvShowsController < ApplicationController
     @tv_show = TvShow.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'TV Show not found' }, status: :not_found
+  end
+
+  def set_cache_headers
+    # Deterministic caching headers
+    expires_in 1.hour, public: true
+    response.headers['Cache-Control'] = 'public, max-age=3600'
   end
 
   def tv_show_params

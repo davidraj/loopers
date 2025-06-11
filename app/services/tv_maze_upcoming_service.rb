@@ -2,7 +2,7 @@ class TvMazeUpcomingService
   include HTTParty
   base_uri 'https://api.tvmaze.com'
 
-  def fetch_upcoming_releases(days = 7)
+  def fetch_upcoming_releases(days = 90)
     total_episodes = 0
     processed_shows = 0
     episodes_created = 0
